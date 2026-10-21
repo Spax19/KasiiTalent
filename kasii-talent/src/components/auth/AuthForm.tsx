@@ -30,8 +30,8 @@ import Typography from "@mui/material/Typography";
 import GoogleIcon from "@mui/icons-material/Google";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import { friendlyAuthError } from "@/lib/auth-errors";
-import { getFirebaseAuth } from "@/lib/firebase/client";
+import { friendlyAuthError } from "../../lib/auth-errors";
+import { getFirebaseAuth } from "../../lib/firebase/client";
 
 type Mode = "login" | "signup";
 
