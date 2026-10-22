@@ -12,21 +12,25 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^9.5.0",
-    "@mui/material": "^9.5.0",
-    "@mui/material-nextjs": "^9.5.0",
+    "@mui/icons-material": "^7.3.11",
+    "@mui/material": "^7.3.11",
+    "@mui/material-nextjs": "^7.3.10",
+    "cloudinary": "^2.11.0",
     "firebase": "^13.0.0",
     "firebase-admin": "^14.5.0",
+    "geofire-common": "^6.0.0",
     "mui": "^0.0.1",
     "next": "16.4.2",
+    "qrcode.react": "^4.2.0",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
     "@tailwindcss/turbopack": "^4",
     "babel-plugin-react-compiler": "1.0.0",
     "tailwindcss": "^4",
-    "typescript": "7.0.2"
+    "typescript": "^5.9.3"
   }
 }

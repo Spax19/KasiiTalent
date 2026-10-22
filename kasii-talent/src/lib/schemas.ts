@@ -15,8 +15,8 @@ export const skillInputSchema = z.object({
 });
 
 export const consentsSchema = z.object({
-  terms: z.literal(true, { errorMap: () => ({ message: "Terms must be accepted" }) }),
-  age18Plus: z.literal(true, { errorMap: () => ({ message: "You must be 18 or older" }) }),
+  terms: z.literal(true, { error: "Terms must be accepted" }),
+  age18Plus: z.literal(true, { error: "You must be 18 or older" }),
   profileSharing: z.boolean(), // false => profile stays private
   policyVersion: z.string().min(1),
 });

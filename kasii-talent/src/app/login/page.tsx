@@ -1,11 +1,22 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import AuthForm from "../../components/auth/AuthForm";
 import { getSessionUser } from "../../lib/auth";
 import { safeNext } from "../../lib/safe-redirect";
 
 export const metadata = { title: "Log in · KasiTalent" };
 
-export default async function LoginPage({
+export default function LoginPage({ searchParams }: {
+  searchParams: Promise<{ next?: string; verified?: string }>;
+}) {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function LoginContent({
   searchParams,
 }: {
   searchParams: Promise<{ next?: string; verified?: string }>;

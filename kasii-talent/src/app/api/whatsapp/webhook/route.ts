@@ -3,7 +3,6 @@ import { after, NextRequest, NextResponse } from "next/server";
 import { verifySignature, type WaMessage } from "../../../../lib/whatsapp";
 import { handleIncomingMessage } from "../../../../services/whatsapp-bot";
 
-export const runtime = "nodejs"; // Admin SDK + crypto need Node, not Edge
 export const maxDuration = 60; // media download + Cloudinary upload can be slow; check your plan's limit
 
 /** Meta's one-time webhook verification handshake. */

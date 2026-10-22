@@ -13,6 +13,7 @@ import { createWorkerProfile, DomainError } from "@/services/workers";
 import { deleteWorkerAccount } from "@/services/erasure";
 import { MediaError, recordPortfolioMedia, uploadWorkerMedia } from "@/services/media";
 import { respondToContactRequest } from "@/services/contact";
+import { approveWorkerLoginChallenge } from "@/services/worker-login";
 
 const SESSIONS = "wa_sessions";
 const PROCESSED = "wa_processed";
@@ -34,6 +35,8 @@ interface SessionData {
   skills?: string[];
   workerUid?: string;
   workerName?: string;
+  skillSlug?: string;
+  skillLabel?: string;
   voucherName?: string;
   relationship?: Relationship;
   rating?: number;
@@ -130,6 +133,12 @@ async function route(ctx: Ctx): Promise<void> {
 
   // Global commands work in any state.
   if (upper === "STOP") return handleStop(ctx);
+  const login = /^LOGIN ([A-F0-9]{32})$/.exec(upper);
+  if (login) {
+    if (!uid) return ctx.say(T.loginNotLinked);
+    const result = await approveWorkerLoginChallenge(login[1], uid);
+    return ctx.say(result === "verified" ? T.loginApproved : T.loginInvalid);
+  }
   const vouch = /^VOUCH ([A-Z0-9]{6})$/.exec(upper);
   if (vouch) return startVouch(ctx, vouch[1]);
   if (upper === "HELP" || upper === "MENU") return ctx.say(T.help);
@@ -148,7 +157,16 @@ async function route(ctx: Ctx): Promise<void> {
       await ctx.setStep("confirm_delete");
       return ctx.say(T.confirmDelete);
     }
-    if (upper === "CODE") {
+    const codeRequest = /^CODE(?:\s+(.+))?$/.exec(ctx.text.trim());
+    if (codeRequest) {
+      const skillLabel = codeRequest[1]?.trim();
+      if (skillLabel) {
+        const skillSlug = slugify(skillLabel);
+        const skill = await adminDb().collection(COL.skills).doc(`${uid}_${skillSlug}`).get();
+        if (!skill.exists) return ctx.say(T.skillNotFound);
+        const code = await getOrIssueVouchCode(uid, skillSlug);
+        return ctx.say(T.yourCode(code, skill.get("label") as string));
+      }
       const code = await getOrIssueVouchCode(uid);
       return ctx.say(T.yourCode(code));
     }
@@ -372,15 +390,20 @@ function randomCode(): string {
   return Array.from({ length: 6 }, () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]).join("");
 }
 
-async function getOrIssueVouchCode(uid: string): Promise<string> {
+async function getOrIssueVouchCode(uid: string, skillSlug?: string): Promise<string> {
   const db = adminDb();
-  const existing = await db.collection(VOUCH_CODES).where("uid", "==", uid).limit(1).get();
-  if (!existing.empty) return existing.docs[0].id;
+  const existing = await db.collection(VOUCH_CODES).where("uid", "==", uid).limit(30).get();
+  const matching = existing.docs.find((doc) => (doc.get("skillSlug") as string | undefined) === skillSlug);
+  if (matching) return matching.id;
 
   for (let i = 0; i < 5; i++) {
     const code = randomCode();
     try {
-      await db.collection(VOUCH_CODES).doc(code).create({ uid, createdAt: FieldValue.serverTimestamp() });
+      await db.collection(VOUCH_CODES).doc(code).create({
+        uid,
+        skillSlug: skillSlug ?? null,
+        createdAt: FieldValue.serverTimestamp(),
+      });
       return code;
     } catch (e) {
       if ((e as { code?: number }).code !== 6) throw e; // only retry on collision
@@ -397,18 +420,21 @@ async function startVouch(ctx: Ctx, code: string) {
   if (!codeSnap.exists) return ctx.say(T.vouchInvalid);
 
   const workerUid = codeSnap.get("uid") as string;
+  const skillSlug = (codeSnap.get("skillSlug") as string | null) ?? undefined;
   if (workerUid === ctx.uid) return ctx.say(T.vouchSelf);
 
-  const [already, worker] = await Promise.all([
+  const [already, worker, skill] = await Promise.all([
     db.collection(COL.endorsements).doc(endorsementId(workerUid, ctx.phoneHash)).get(),
     db.collection(COL.users).doc(workerUid).get(),
+    skillSlug ? db.collection(COL.skills).doc(`${workerUid}_${skillSlug}`).get() : Promise.resolve(null),
   ]);
   if (already.exists) return ctx.say(T.vouchAlready);
-  if (!worker.exists) return ctx.say(T.vouchInvalid);
+  if (!worker.exists || (skillSlug && !skill?.exists)) return ctx.say(T.vouchInvalid);
 
   const workerName = worker.get("displayName") as string;
-  await ctx.setStep("vouch_name", { workerUid, workerName });
-  return ctx.say(T.vouchIntro(workerName));
+  const skillLabel = skill?.get("label") as string | undefined;
+  await ctx.setStep("vouch_name", { workerUid, workerName, skillSlug, skillLabel });
+  return ctx.say(T.vouchIntro(workerName, skillLabel));
 }
 
 async function stepVouchName(ctx: Ctx) {
@@ -462,15 +488,19 @@ async function stepVouchComment(ctx: Ctx) {
     // Two distinct vouches move a skill from "pending" to "community_vouched".
     let verified = 0;
     for (const s of skillsSnap.docs) {
-      const vouchCount = ((s.get("vouchCount") as number) ?? 0) + 1;
+      const appliesToSkill = !d.skillSlug || s.get("skillSlug") === d.skillSlug;
+      const vouchCount = ((s.get("vouchCount") as number) ?? 0) + (appliesToSkill ? 1 : 0);
       const current = s.get("verificationStatus") as string;
       const next = current === "pending" && vouchCount >= 2 ? "community_vouched" : current;
       if (next !== "pending") verified++;
-      tx.update(s.ref, { vouchCount, verificationStatus: next, updatedAt: FieldValue.serverTimestamp() });
+      if (appliesToSkill) {
+        tx.update(s.ref, { vouchCount, verificationStatus: next, updatedAt: FieldValue.serverTimestamp() });
+      }
     }
 
     tx.set(endorsementRef, {
       workerUid: d.workerUid,
+      ...(d.skillSlug ? { skillSlug: d.skillSlug } : {}),
       voucherName: d.voucherName,
       voucherRelationship: d.relationship,
       voucherPhoneHash: ctx.phoneHash, // never the number itself

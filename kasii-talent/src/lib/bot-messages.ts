@@ -36,7 +36,7 @@ export const en = {
   help:
     `KasiTalent options:\n` +
     `NEW PHOTO – add work photos or video\n` +
-    `CODE – get your vouch code\n` +
+    `CODE – get a general vouch code; CODE <skill> – get a code for one skill\n` +
     `PAUSE – hide your profile\n` +
     `RESUME – show your profile again\n` +
     `STOP – stop sharing your profile\n` +
@@ -50,17 +50,23 @@ export const en = {
   deleted: `Your data has been erased. Thank you for trying KasiTalent.`,
   deleteCancelled: `Okay, nothing was deleted.`,
   noProfile: `You do not have a profile yet. Say hi to start.`,
-  yourCode: (code: string) => `Your vouch code is ${code}. Ask customers or bosses to send "VOUCH ${code}" to this number.`,
+  yourCode: (code: string, skill?: string) =>
+    `Your ${skill ? `${skill} ` : ""}vouch code is ${code}. Ask a customer, colleague or community member to send "VOUCH ${code}" to this number.`,
+  skillNotFound: `I could not find that skill on your profile. Reply CODE to get a general vouch code, or send CODE followed by one of your listed skills.`,
   contactShared: `Thanks! We have let the employer know you are happy to be contacted.`,
   contactDeclined: `No problem, we have declined for you.`,
-  contactRequest: (business: string) =>
-    `${business} wants to contact you about work. Reply 1 to share your number with them, or 2 to decline.`,
+  contactRequest: (business: string, serviceTitle?: string, details?: string) =>
+    `${business} is requesting ${serviceTitle || "your service"}${details ? `: ${details}` : ""}. ` +
+    `Reply 1 to accept and share your number, or 2 to decline.`,
+  loginApproved: `Your worker sign-in is approved. Return to your browser to finish signing in. If you did not request this, ignore this message.`,
+  loginNotLinked: `This WhatsApp number is not linked to a worker profile. Start by saying hi to KasiTalent to create one.`,
+  loginInvalid: `That sign-in link has expired or was already used. Start again from the worker sign-in page.`,
   /* vouching */
   vouchInvalid: `That code is not valid. Please check it and try again.`,
   vouchSelf: `You cannot vouch for yourself 🙂`,
   vouchAlready: `You have already vouched for this person. Thank you!`,
-  vouchIntro: (worker: string) =>
-    `You are vouching for ${worker}. Your name and comment will be shown on their profile. Reply STOP to cancel.\n\nWhat is your name?`,
+  vouchIntro: (worker: string, skill?: string) =>
+    `You are reviewing ${worker}${skill ? ` for ${skill}` : ""}. Your name and comment will be shown on their profile. Reply STOP to cancel.\n\nWhat is your name?`,
   vouchRelationship:
     `How do you know them?\n1 = I am a customer\n2 = I am their boss/employer\n3 = I am a neighbour/community member\n4 = I am a colleague`,
   vouchRating: `How would you rate their work? Reply 1 (poor) to 5 (excellent).`,

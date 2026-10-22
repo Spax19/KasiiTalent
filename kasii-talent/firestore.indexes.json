@@ -1,0 +1,38 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "portfolio_media",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "uid", "order": "ASCENDING" },
+        { "fieldPath": "moderationStatus", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "endorsements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "workerUid", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "contact_requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "employerUid", "order": "ASCENDING" },
+        { "fieldPath": "workerUid", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "contact_requests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "workerUid", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

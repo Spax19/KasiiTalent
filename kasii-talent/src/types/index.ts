@@ -127,6 +127,13 @@ export interface CandidateMediaDTO {
   skillSlug: string;
 }
 
+export interface CandidateReviewDTO {
+  voucherName: string;
+  relationship: EndorsementDoc["voucherRelationship"];
+  rating: number;
+  comment: string;
+}
+
 export interface CandidateDTO {
   id: string;
   displayName: string;
@@ -136,6 +143,7 @@ export interface CandidateDTO {
   ratingAvg: number;
   ratingCount: number;
   endorsementCount: number;
+  reviews: CandidateReviewDTO[];
   skills: CandidateSkillDTO[];
   media: CandidateMediaDTO[];
   memberSince: string; // ISO

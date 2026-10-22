@@ -1,11 +1,20 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import AuthForm from "../../components/auth/AuthForm";
 import { getSessionUser } from "../../lib/auth";
 import { safeNext } from "../../lib/safe-redirect";
 
 export const metadata = { title: "Create a business account · KasiTalent" };
 
-export default async function SignupPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+export default function SignupPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+  return (
+    <Suspense fallback={null}>
+      <SignupContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function SignupContent({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next } = await searchParams;
   const dest = safeNext(next);
 

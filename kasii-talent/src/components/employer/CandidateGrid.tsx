@@ -10,7 +10,9 @@ import CardContent from "@mui/material/CardContent";
 import Chip from "@mui/material/Chip";
 import Container from "@mui/material/Container";
 import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import IconButton from "@mui/material/IconButton";
@@ -25,6 +27,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SearchIcon from "@mui/icons-material/Search";
 import VerifiedIcon from "@mui/icons-material/Verified";
+import Slider from "@mui/material/Slider";
 import type { CandidateDTO, CandidateMediaDTO, VerificationStatus } from "@/types";
 
 /* ------------------------------------------------------------------ */
@@ -33,7 +36,7 @@ import type { CandidateDTO, CandidateMediaDTO, VerificationStatus } from "@/type
 interface CandidateGridProps {
   candidates: CandidateDTO[];
   /** Calls a Server Action that creates a consent-gated contact request. */
-  onRequestContact?: (candidateId: string) => Promise<void> | void;
+  onRequestContact?: (candidateId: string, serviceTitle: string, details: string) => Promise<void> | void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -236,6 +239,9 @@ function CandidateCard({
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [serviceTitle, setServiceTitle] = useState(candidate.skills[0]?.label ?? "");
+  const [serviceDetails, setServiceDetails] = useState("");
 
   const bestStatus = useMemo<VerificationStatus>(() => {
     if (candidate.skills.some((s) => s.status === "app_tested")) return "app_tested";
@@ -248,8 +254,9 @@ function CandidateCard({
     setBusy(true);
     setFailed(false);
     try {
-      await onRequestContact(candidate.id);
+      await onRequestContact(candidate.id, serviceTitle, serviceDetails);
       setSent(true);
+      setRequestOpen(false);
     } catch {
       setFailed(true);
     } finally {
@@ -314,6 +321,19 @@ function CandidateCard({
           ))}
         </Stack>
 
+        {candidate.reviews.some((review) => review.comment) && (
+          <Stack spacing={1}>
+            {candidate.reviews.filter((review) => review.comment).map((review, index) => (
+              <Box key={`${candidate.id}-${index}`} sx={{ borderLeft: 2, borderColor: "divider", pl: 1.25 }}>
+                <Typography variant="body2">“{review.comment}”</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {review.voucherName} · {review.relationship} · {review.rating}/5
+                </Typography>
+              </Box>
+            ))}
+          </Stack>
+        )}
+
         <MediaStrip media={candidate.media} onOpen={setLightboxIndex} />
       </CardContent>
 
@@ -325,13 +345,47 @@ function CandidateCard({
           variant="contained"
           color={sent ? "success" : "secondary"}
           size="small"
-          onClick={handleRequest}
+          onClick={() => setRequestOpen(true)}
           disabled={sent || busy || !onRequestContact}
           sx={{ "&.Mui-disabled": sent ? { bgcolor: "success.main", color: "common.white" } : undefined }}
         >
-          {sent ? "Request sent ✓" : busy ? "Sending…" : "Request contact"}
+          {sent ? "Request sent ✓" : busy ? "Sending…" : "Request service"}
         </Button>
       </CardActions>
+
+      <Dialog open={requestOpen} onClose={() => !busy && setRequestOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Request a service from {candidate.displayName}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <TextField
+              label="Service needed"
+              value={serviceTitle}
+              onChange={(event) => setServiceTitle(event.target.value)}
+              required
+              inputProps={{ maxLength: 80 }}
+              fullWidth
+            />
+            <TextField
+              label="Details (optional)"
+              value={serviceDetails}
+              onChange={(event) => setServiceDetails(event.target.value)}
+              multiline
+              minRows={3}
+              inputProps={{ maxLength: 500 }}
+              fullWidth
+            />
+            <Typography variant="body2" color="text.secondary">
+              The worker will receive this request on WhatsApp and can accept or decline it there.
+            </Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setRequestOpen(false)} disabled={busy}>Cancel</Button>
+          <Button onClick={handleRequest} variant="contained" disabled={busy || serviceTitle.trim().length < 2}>
+            {busy ? "Sending…" : "Send request"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {lightboxIndex !== null && (
         <Lightbox media={candidate.media} startIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
@@ -346,11 +400,14 @@ function CandidateCard({
 export default function CandidateGrid({ candidates, onRequestContact }: CandidateGridProps) {
   const [query, setQuery] = useState("");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
-
+  const [ratedOnly, setRatedOnly] = useState(false);
+  const [minimumRating, setMinimumRating] = useState(0);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return candidates.filter((c) => {
       if (verifiedOnly && !c.skills.some((s) => s.status !== "pending")) return false;
+      if (ratedOnly && c.ratingCount === 0) return false;
+      if (c.ratingCount > 0 && c.ratingAvg < minimumRating) return false;
       if (!q) return true;
       return (
         c.displayName.toLowerCase().includes(q) ||
@@ -358,7 +415,9 @@ export default function CandidateGrid({ candidates, onRequestContact }: Candidat
         c.skills.some((s) => s.label.toLowerCase().includes(q))
       );
     });
-  }, [candidates, query, verifiedOnly]);
+  }, [candidates, query, verifiedOnly, ratedOnly, minimumRating]);
+
+  const sorted = useMemo(() => [...filtered].sort((a, b) => b.ratingAvg - a.ratingAvg), [filtered]);
 
   return (
     <Container component="section" maxWidth="xl" sx={{ py: 3 }}>
@@ -385,9 +444,25 @@ export default function CandidateGrid({ candidates, onRequestContact }: Candidat
           control={<Checkbox checked={verifiedOnly} onChange={(e) => setVerifiedOnly(e.target.checked)} />}
           label="Verified skills only"
         />
+        <FormControlLabel
+          control={<Checkbox checked={ratedOnly} onChange={(e) => setRatedOnly(e.target.checked)} />}
+          label="Rated workers only"
+        />
+        <Box sx={{ width: { xs: "100%", sm: 180 }, px: 1 }}>
+          <Typography variant="caption" color="text.secondary">Minimum rating: {minimumRating.toFixed(1)}</Typography>
+          <Slider
+            size="small"
+            min={0}
+            max={5}
+            step={0.5}
+            value={minimumRating}
+            onChange={(_, value) => setMinimumRating(value as number)}
+            aria-label="Minimum worker rating"
+          />
+        </Box>
       </Stack>
 
-      {filtered.length === 0 ? (
+      {sorted.length === 0 ? (
         <Box sx={{ border: "1px dashed", borderColor: "divider", borderRadius: 3, py: 8, textAlign: "center" }}>
           <Typography color="text.secondary">No candidates match yet. Try a wider area or remove filters.</Typography>
         </Box>
@@ -399,7 +474,7 @@ export default function CandidateGrid({ candidates, onRequestContact }: Candidat
             gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", xl: "repeat(3, 1fr)" },
           }}
         >
-          {filtered.map((c) => (
+          {sorted.map((c) => (
             <CandidateCard key={c.id} candidate={c} onRequestContact={onRequestContact} />
           ))}
         </Box>

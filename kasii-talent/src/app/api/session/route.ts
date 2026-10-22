@@ -4,8 +4,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminAuth, adminDb, COL } from "../../../lib/firebase/admin";
 
-export const runtime = "nodejs";
-
 const EXPIRES_MS = 5 * 24 * 60 * 60 * 1000; // 5 days
 const RECENT_SIGN_IN_SECONDS = 5 * 60;
 

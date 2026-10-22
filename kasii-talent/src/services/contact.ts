@@ -17,7 +17,12 @@ export async function notifyContactRequest(requestId: string): Promise<void> {
   const db = adminDb();
   const reqSnap = await db.collection(COL.contactRequests).doc(requestId).get();
   if (!reqSnap.exists) return;
-  const { employerUid, workerUid } = reqSnap.data() as { employerUid: string; workerUid: string };
+  const { employerUid, workerUid, serviceTitle, details } = reqSnap.data() as {
+    employerUid: string;
+    workerUid: string;
+    serviceTitle?: string;
+    details?: string;
+  };
 
   const [employer, priv] = await Promise.all([
     db.collection(COL.users).doc(employerUid).get(),
@@ -28,9 +33,10 @@ export async function notifyContactRequest(requestId: string): Promise<void> {
   const business = (employer.get("businessName") || employer.get("displayName") || "A local business") as string;
 
   try {
-    await sendTemplate(phone, "contact_request", "en", [business]);
+    const requestSummary = [business, serviceTitle && `needs ${serviceTitle}`, details].filter(Boolean).join(" | ").slice(0, 200);
+    await sendTemplate(phone, "contact_request", "en", [requestSummary]);
   } catch {
-    await sendText(phone, T.contactRequest(business)).catch(() => {
+    await sendText(phone, T.contactRequest(business, serviceTitle, details)).catch(() => {
       console.error("contact request notification failed"); // request stays "sent"; worker can still reply later
     });
   }

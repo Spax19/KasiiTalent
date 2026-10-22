@@ -40,6 +40,9 @@ export default function Home() {
           <Button variant="outlined" color="secondary" size="large" href="/login">
             Log in
           </Button>
+          <Button variant="text" size="large" href="/worker/login">
+            Worker profile sign in
+          </Button>
         </Stack>
       </Container>
 
