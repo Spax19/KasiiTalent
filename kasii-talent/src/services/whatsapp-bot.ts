@@ -1,6 +1,6 @@
 // Path: src/services/whatsapp-bot.ts
 // Conversation state machine for the WhatsApp-first worker experience.
-// State lives in Firestore (wa_sessions/{phoneHash}, 7-day TTL) because serverless instances are stateless.
+// State lives in Firestore (wa_sessions/{phoneHash}, 7-day TTL) so it survives gateway restarts.
 import "server-only";
 import { createHash, randomInt } from "node:crypto";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
@@ -63,7 +63,7 @@ interface Ctx {
 export async function handleIncomingMessage(msg: WaMessage, _profileName?: string): Promise<void> {
   const phone = normalizeSaPhone(msg.from);
   if (!phone) return; // this service is South Africa only
-  if (!(await claimMessage(msg.id))) return; // Meta retries; process each message once
+  if (!(await claimMessage(msg.id))) return; // Gateway retries; process each message once
 
   const db = adminDb();
   const phoneHash = hashPhone(phone);

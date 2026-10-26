@@ -3,15 +3,13 @@
 import "server-only";
 import { FieldValue } from "firebase-admin/firestore";
 import { adminDb, COL } from "@/lib/firebase/admin";
-import { sendTemplate, sendText } from "@/lib/whatsapp";
+import { sendText } from "@/lib/whatsapp";
 import { en as T } from "@/lib/bot-messages";
 
 const REQUEST_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
- * Tells the worker about a new request. Outside the 24h window WhatsApp only allows
- * pre-approved templates, so we try the template "contact_request" (one body variable:
- * business name) first and fall back to free text, which works if the worker messaged recently.
+ * Queues a worker notification for delivery by the persistent Baileys gateway.
  */
 export async function notifyContactRequest(requestId: string): Promise<void> {
   const db = adminDb();
@@ -32,14 +30,7 @@ export async function notifyContactRequest(requestId: string): Promise<void> {
   if (!phone) return;
   const business = (employer.get("businessName") || employer.get("displayName") || "A local business") as string;
 
-  try {
-    const requestSummary = [business, serviceTitle && `needs ${serviceTitle}`, details].filter(Boolean).join(" | ").slice(0, 200);
-    await sendTemplate(phone, "contact_request", "en", [requestSummary]);
-  } catch {
-    await sendText(phone, T.contactRequest(business, serviceTitle, details)).catch(() => {
-      console.error("contact request notification failed"); // request stays "sent"; worker can still reply later
-    });
-  }
+  await sendText(phone, T.contactRequest(business, serviceTitle, details));
 }
 
 /** Worker replied 1 or 2. Applies to their most recent open, unexpired request. */

@@ -1,5 +1,5 @@
 // Path: src/services/workers.ts
-// Transport-agnostic core: called by the web Server Action AND the WhatsApp webhook.
+// Transport-agnostic core: called by web actions and the Baileys gateway bot.
 import "server-only";
 import { FieldValue } from "firebase-admin/firestore";
 import { geohashForLocation } from "geofire-common";

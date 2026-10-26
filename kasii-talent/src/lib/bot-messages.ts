@@ -3,7 +3,7 @@
 // Add isiZulu / Sesotho / Setswana / Xitsonga objects with the same keys and have
 // them written or reviewed by native speakers; do not machine-translate consent text.
 
-export const POLICY_VERSION = "2026-10-v1";
+export const POLICY_VERSION = "2026-10-v2";
 
 const privacyUrl = () => `${process.env.NEXT_PUBLIC_APP_URL ?? "https://kasitalent.example"}/privacy`;
 

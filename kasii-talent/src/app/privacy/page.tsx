@@ -22,7 +22,7 @@ const sections: Section[] = [
   {
     title: "What we collect, and why",
     items: [
-      "Your cellphone number, to identify you and to message you on WhatsApp.",
+      "Your cellphone number, to identify your profile and exchange messages through WhatsApp.",
       "Your name, area, skills and years of experience, to build your profile.",
       "Photos and short videos of your work that you send us, as proof of your skills.",
       "Vouches (name, relationship, rating and comment) that customers or bosses give you.",
@@ -32,7 +32,7 @@ const sections: Section[] = [
   {
     title: "Who sees your information",
     paragraph:
-      "Employers can see your name, area, skills, ratings and approved work photos only if you agreed to profile sharing. They never see your cellphone number unless you reply 1 to a contact request. We use service providers (WhatsApp/Meta, Google Firebase, Cloudinary, Vercel) to run the service. Some of them store data outside South Africa; we only use providers that protect personal information to a comparable standard.",
+      "Employers can see your name, area, skills, ratings and approved work photos only if you agreed to profile sharing. They never see your cellphone number unless you reply 1 to a contact request. WhatsApp messages are processed by our connected WhatsApp account using the unofficial Baileys WhatsApp Web library, in addition to Google Firebase, Cloudinary and Vercel. Some providers may process data outside South Africa; review their terms and our cross-border safeguards before launch.",
   },
   {
     title: "Your rights",
