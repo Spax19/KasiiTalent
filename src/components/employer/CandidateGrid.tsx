@@ -328,7 +328,7 @@ function CandidateCard({
           size="small"
           onClick={handleRequest}
           disabled={sent || busy || !onRequestContact}
-          sx={{ "&.Mui-disabled": sent ? { bgcolor: "success.main", color: "common.white" } : undefined }}
+          sx={sent ? { "&.Mui-disabled": { bgcolor: "success.main", color: "common.white" } } : undefined}
         >
           {sent ? "Request sent ✓" : busy ? "Sending…" : "Request contact"}
         </Button>

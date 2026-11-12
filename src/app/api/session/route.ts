@@ -10,8 +10,10 @@ const EXPIRES_MS = 5 * 24 * 60 * 60 * 1000; // 5 days
 const RECENT_SIGN_IN_SECONDS = 5 * 60;
 
 export async function POST(req: NextRequest) {
-  const body = (await req.json().catch(() => ({}))) as { idToken?: string; role?: "employer" };
-  if (typeof body.idToken !== "string") return NextResponse.json({ error: "Missing token" }, { status: 400 });
+  const body = (await req.json().catch(() => ({}))) as { idToken?: string; role?: "worker" | "employer" };
+  if (typeof body.idToken !== "string" || (body.role !== "worker" && body.role !== "employer")) {
+    return NextResponse.json({ error: "Missing token or role" }, { status: 400 });
+  }
 
   let decoded;
   try {
@@ -83,6 +85,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ refresh: true });
     }
     return NextResponse.json({ error: "No role assigned" }, { status: 403 });
+  }
+
+  if (decoded.role !== body.role) {
+    return NextResponse.json({ error: "This account cannot access that dashboard." }, { status: 403 });
   }
 
   const cookie = await adminAuth().createSessionCookie(body.idToken, { expiresIn: EXPIRES_MS });

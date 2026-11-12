@@ -6,7 +6,7 @@ import { signOut } from "firebase/auth";
 import Button from "@mui/material/Button";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 
-export default function SignOutButton() {
+export default function SignOutButton({ redirectTo = "/login" }: { redirectTo?: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -16,7 +16,7 @@ export default function SignOutButton() {
       await fetch("/api/session", { method: "DELETE" }); // clears the httpOnly cookie
       await signOut(getFirebaseAuth()).catch(() => undefined);
     } finally {
-      router.replace("/login");
+      router.replace(redirectTo);
       router.refresh();
     }
   }

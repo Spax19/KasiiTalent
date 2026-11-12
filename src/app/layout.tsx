@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
-import { ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
-import theme from "@/theme";
+import ColorModeProvider from "@/components/ColorModeProvider";
 
 export const metadata: Metadata = {
   title: "KasiTalent",
@@ -19,10 +17,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <AppRouterCacheProvider>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
+          <ColorModeProvider>
             {children}
-          </ThemeProvider>
+          </ColorModeProvider>
         </AppRouterCacheProvider>
       </body>
     </html>

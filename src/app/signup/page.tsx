@@ -12,6 +12,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
 
   const user = await getSessionUser();
   if (user?.role === "employer") redirect(dest);
+  if (user?.role === "worker") redirect("/worker/dashboard");
 
   return <AuthForm mode="signup" next={dest} />;
 }

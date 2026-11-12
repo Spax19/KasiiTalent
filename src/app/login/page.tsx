@@ -14,9 +14,9 @@ export default async function LoginPage({
   const { next, verified } = await searchParams;
   const dest = safeNext(next);
 
-  // Already logged in as an employer: skip the form.
   const user = await getSessionUser();
   if (user?.role === "employer") redirect(dest);
+  if (user?.role === "worker") redirect("/worker/dashboard");
 
   return <AuthForm mode="login" next={dest} emailVerified={verified === "1"} />;
 }

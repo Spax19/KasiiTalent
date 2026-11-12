@@ -14,7 +14,7 @@ const steps = [
 ];
 
 export default function Home() {
-  const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER; // optional, e.g. 27821234567
+  const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, ""); // optional, e.g. 27821234567
   return (
     <Box component="main">
       <Container maxWidth="md" sx={{ py: { xs: 8, sm: 12 } }}>
@@ -39,6 +39,9 @@ export default function Home() {
           </Button>
           <Button variant="outlined" color="secondary" size="large" href="/login">
             Log in
+          </Button>
+          <Button variant="text" color="secondary" size="large" href="/worker/login">
+            Worker dashboard
           </Button>
         </Stack>
       </Container>

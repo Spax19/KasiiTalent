@@ -20,7 +20,7 @@ Type-check: `npm run typecheck`
 
 1. console.firebase.google.com > **Add project**.
 2. **Build > Firestore Database > Create database.** Choose the Johannesburg region (`africa-south1`) if offered. It cannot be changed later.
-3. **Build > Authentication > Get started > Sign-in method.** Enable **Email/Password** and **Google** (used by employer signup and login). `localhost` is authorised by default; when you deploy, add your domain under **Authentication > Settings > Authorized domains**.
+3. **Build > Authentication > Get started > Sign-in method.** Enable **Email/Password** and **Google** (employer signup and login) and **Phone** (worker dashboard sign-in). `localhost` is authorised by default; when you deploy, add your domain under **Authentication > Settings > Authorized domains**.
 4. Gear icon > **Project settings > Service accounts > Generate new private key.** Copy three values from the downloaded JSON into `.env.local`:
    - `project_id` -> `FIREBASE_PROJECT_ID`
    - `client_email` -> `FIREBASE_CLIENT_EMAIL`
@@ -44,7 +44,7 @@ The login and signup pages talk to Firebase Auth from the browser, so they need 
 5. Customize the built-in template's sender name, subject and message. Suggested sender: `KasiTalent`; subject: `Verify your KasiTalent email`; message: `Welcome to KasiTalent. Verify your email to finish setting up your business account. If you didn't create this account, you can ignore this email.` Keep Firebase's generated verification link/button in the message. The built-in template supports basic copy and sender customization; Firebase controls the email layout.
 6. Try it: open `/signup`, create an account, and click the verification link. The `/verify-email` page confirms the email and offers a button to `/login`.
 
-How it works: the browser signs in with Firebase, then `/api/session` verifies the token and sets an httpOnly cookie. The first time an account signs in, the server gives it the `employer` role. Email accounts must verify their email first; Google accounts are already verified. Worker accounts are phone-only and cannot log in here.
+How it works: the browser signs in with Firebase, then `/api/session` verifies the token and sets an httpOnly cookie. The first time an employer account signs in, the server gives it the `employer` role. Email accounts must verify their email first; Google accounts are already verified. Workers create profiles through WhatsApp and use phone OTP at `/worker/login` to access their dashboard.
 
 ## Other keys
 
@@ -85,12 +85,14 @@ src/
     page.tsx                         landing page
     privacy/page.tsx                 POPIA notice template ([BRACKETED] items to fill)
     login/page.tsx, signup/page.tsx  employer login and signup (email + Google)
-    (employer)/dashboard/page.tsx    employer candidate grid (server component)
+    (employer)/dashboard/page.tsx    employer candidate dashboard (server component)
+    (worker)/worker/                 worker phone sign-in and profile dashboard
     actions/worker.ts                server actions: register, upload signature, save media
     api/whatsapp/webhook/route.ts    Meta webhook (verify + receive)
     api/session/route.ts             ID token -> session cookie
   components/auth/                   AuthForm (login/signup), SignOutButton
   components/employer/CandidateGrid.tsx
+  components/worker/                 worker sign-in and portfolio manager
   lib/                               firebase admin, phone utils, schemas, whatsapp client, bot copy, auth
   services/                          workers, media, contact, erasure, whatsapp-bot (state machine)
   types/index.ts
@@ -101,10 +103,10 @@ firestore.indexes.json               composite indexes + TTL policies
 
 ## Known gaps
 
-- **Employer profile:** the business name comes from signup (or the Google name). There is no screen to edit business details or township yet. Workers have no web login; they use WhatsApp only.
+- **Employer profile:** the business name comes from signup (or the Google name). There is no screen to edit business details or township yet.
 - **Media approval:** uploads are saved as `pending` and employers only see `approved`. Add an admin screen or Cloudinary moderation.
-- Job postings UI, worker web profile editor, skill tests (`app_tested`).
-- This project has not been installed, type-checked or run yet. Run `npm install && npm run typecheck` and fix anything it flags.
+- Job postings UI and skill tests (`app_tested`). Workers can manage portfolio uploads on the web; profile and visibility changes remain available through WhatsApp.
+- Run `npm run typecheck` after making changes to check the TypeScript code.
 
 ## Security notes
 

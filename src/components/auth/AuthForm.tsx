@@ -329,7 +329,9 @@ export default function AuthForm({ mode, next, emailVerified = false }: AuthForm
         </Link>
       </Typography>
       <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1.5 }}>
-        Looking for work? You do not need an account here. Just say hi to us on WhatsApp.
+        Looking for work?{" "}
+        <Link component={NextLink} href="/worker/login">Sign in to your worker dashboard</Link>
+        {" "}or create your profile on WhatsApp.
       </Typography>
     </Shell>
   );
