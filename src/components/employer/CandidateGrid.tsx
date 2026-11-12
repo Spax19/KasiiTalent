@@ -2,6 +2,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -19,6 +20,7 @@ import InputAdornment from "@mui/material/InputAdornment";
 import Rating from "@mui/material/Rating";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -26,15 +28,23 @@ import CloseIcon from "@mui/icons-material/Close";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SearchIcon from "@mui/icons-material/Search";
 import VerifiedIcon from "@mui/icons-material/Verified";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import type { CandidateDTO, CandidateMediaDTO, VerificationStatus } from "@/types";
+
+type SavedActionResult = { ok: true } | { ok: false; error: string };
+const EMPTY_SAVED_CANDIDATE_IDS: string[] = [];
 
 /* ------------------------------------------------------------------ */
 /* Props                                                               */
 /* ------------------------------------------------------------------ */
 interface CandidateGridProps {
   candidates: CandidateDTO[];
+  savedCandidateIds?: string[];
+  savedOnly?: boolean;
   /** Calls a Server Action that creates a consent-gated contact request. */
   onRequestContact?: (candidateId: string) => Promise<void> | void;
+  onToggleSaved?: (candidateId: string, saved: boolean) => Promise<SavedActionResult>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -229,14 +239,22 @@ function Lightbox({
 function CandidateCard({
   candidate,
   onRequestContact,
+  isSaved,
+  onToggleSaved,
+  onSavedChange,
 }: {
   candidate: CandidateDTO;
   onRequestContact?: CandidateGridProps["onRequestContact"];
+  isSaved: boolean;
+  onToggleSaved?: CandidateGridProps["onToggleSaved"];
+  onSavedChange: (candidateId: string, saved: boolean) => void;
 }) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const bestStatus = useMemo<VerificationStatus>(() => {
     if (candidate.skills.some((s) => s.status === "app_tested")) return "app_tested";
@@ -255,6 +273,24 @@ function CandidateCard({
       setFailed(true);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleToggleSaved() {
+    if (!onToggleSaved || saving) return;
+    setSaving(true);
+    setSaveError("");
+    try {
+      const result = await onToggleSaved(candidate.id, !isSaved);
+      if (!result.ok) {
+        setSaveError(result.error);
+        return;
+      }
+      onSavedChange(candidate.id, !isSaved);
+    } catch {
+      setSaveError("Could not update saved candidates. Try again.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -319,19 +355,36 @@ function CandidateCard({
       </CardContent>
 
       <CardActions sx={{ justifyContent: "space-between", px: 2, pb: 2, pt: 0 }}>
-        <Typography variant="caption" color={failed ? "error" : "text.disabled"}>
-          {failed ? "Could not send. Try again." : `${candidate.endorsementCount} community vouches`}
+        <Typography variant="caption" color={failed || saveError ? "error" : "text.disabled"}>
+          {failed ? "Could not send. Try again." : saveError || `${candidate.endorsementCount} community vouches`}
         </Typography>
-        <Button
-          variant="contained"
-          color={sent ? "success" : "secondary"}
-          size="small"
-          onClick={handleRequest}
-          disabled={sent || busy || !onRequestContact}
-          sx={sent ? { "&.Mui-disabled": { bgcolor: "success.main", color: "common.white" } } : undefined}
-        >
-          {sent ? "Request sent ✓" : busy ? "Sending…" : "Request contact"}
-        </Button>
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          {onToggleSaved && (
+            <Tooltip title={isSaved ? "Remove from saved candidates" : "Save candidate"}>
+              <span>
+                <IconButton
+                  aria-label={isSaved ? "Remove from saved candidates" : "Save candidate"}
+                  onClick={handleToggleSaved}
+                  disabled={saving}
+                  color={isSaved ? "error" : "default"}
+                  size="small"
+                >
+                  {isSaved ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
+          <Button
+            variant="contained"
+            color={sent ? "success" : "secondary"}
+            size="small"
+            onClick={handleRequest}
+            disabled={sent || busy || !onRequestContact}
+            sx={sent ? { "&.Mui-disabled": { bgcolor: "success.main", color: "common.white" } } : undefined}
+          >
+            {sent ? "Request sent ✓" : busy ? "Sending…" : "Request contact"}
+          </Button>
+        </Stack>
       </CardActions>
 
       {lightboxIndex !== null && (
@@ -344,9 +397,21 @@ function CandidateCard({
 /* ------------------------------------------------------------------ */
 /* Grid with lightweight client-side filters                           */
 /* ------------------------------------------------------------------ */
-export default function CandidateGrid({ candidates, onRequestContact }: CandidateGridProps) {
+export default function CandidateGrid({
+  candidates,
+  savedCandidateIds = EMPTY_SAVED_CANDIDATE_IDS,
+  savedOnly = false,
+  onRequestContact,
+  onToggleSaved,
+}: CandidateGridProps) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [savedIds, setSavedIds] = useState<Set<string>>(() => new Set(savedCandidateIds));
+
+  useEffect(() => {
+    setSavedIds(new Set(savedCandidateIds));
+  }, [savedCandidateIds]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -360,6 +425,18 @@ export default function CandidateGrid({ candidates, onRequestContact }: Candidat
       );
     });
   }, [candidates, query, verifiedOnly]);
+
+  const displayedCandidates = savedOnly ? filtered.filter((candidate) => savedIds.has(candidate.id)) : filtered;
+
+  const handleSavedChange = useCallback((candidateId: string, saved: boolean) => {
+    setSavedIds((current) => {
+      const next = new Set(current);
+      if (saved) next.add(candidateId);
+      else next.delete(candidateId);
+      return next;
+    });
+    router.refresh();
+  }, [router]);
 
   return (
     <Container component="section" maxWidth="xl" sx={{ py: 3 }}>
@@ -388,9 +465,11 @@ export default function CandidateGrid({ candidates, onRequestContact }: Candidat
         />
       </Stack>
 
-      {filtered.length === 0 ? (
+      {displayedCandidates.length === 0 ? (
         <Box sx={{ border: "1px dashed", borderColor: "divider", borderRadius: 3, py: 8, textAlign: "center" }}>
-          <Typography color="text.secondary">No candidates match yet. Try a wider area or remove filters.</Typography>
+          <Typography color="text.secondary">
+            {savedOnly ? "You have no saved candidates here yet." : "No candidates match yet. Try a wider area or remove filters."}
+          </Typography>
         </Box>
       ) : (
         <Box
@@ -400,8 +479,15 @@ export default function CandidateGrid({ candidates, onRequestContact }: Candidat
             gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", xl: "repeat(3, 1fr)" },
           }}
         >
-          {filtered.map((c) => (
-            <CandidateCard key={c.id} candidate={c} onRequestContact={onRequestContact} />
+          {displayedCandidates.map((c) => (
+            <CandidateCard
+              key={c.id}
+              candidate={c}
+              onRequestContact={onRequestContact}
+              isSaved={savedIds.has(c.id)}
+              onToggleSaved={onToggleSaved}
+              onSavedChange={handleSavedChange}
+            />
           ))}
         </Box>
       )}

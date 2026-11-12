@@ -86,13 +86,18 @@ src/
     privacy/page.tsx                 POPIA notice template ([BRACKETED] items to fill)
     login/page.tsx, signup/page.tsx  employer login and signup (email + Google)
     (employer)/dashboard/page.tsx    employer candidate dashboard (server component)
+    (employer)/jobs/page.tsx         employer job management
+    (employer)/messages/page.tsx     employer job applications and responses
+    (employer)/saved/page.tsx        saved public worker profiles
+    (employer)/settings/page.tsx     employer business profile settings
     (worker)/worker/                 worker phone sign-in and profile dashboard
+    actions/employer.ts              employer profile, saved-candidate and contact actions
     actions/worker.ts                server actions: register, upload signature, save media
     api/whatsapp/webhook/route.ts    Meta webhook (verify + receive)
     api/session/route.ts             ID token -> session cookie
   components/auth/                   AuthForm (login/signup), SignOutButton
-  components/employer/CandidateGrid.tsx
-  components/worker/                 worker sign-in and portfolio manager
+  components/employer/               candidate grid, employer messages and shared sidebar
+  components/worker/                 worker sign-in, portfolio manager and reusable worker sidebar
   lib/                               firebase admin, phone utils, schemas, whatsapp client, bot copy, auth
   services/                          workers, media, contact, erasure, whatsapp-bot (state machine)
   types/index.ts
@@ -103,9 +108,9 @@ firestore.indexes.json               composite indexes + TTL policies
 
 ## Known gaps
 
-- **Employer profile:** the business name comes from signup (or the Google name). There is no screen to edit business details or township yet.
+- **Employer profile:** business name, type, and service area can be managed in Account Settings. Sign-in email changes remain with the identity provider.
 - **Media approval:** uploads are saved as `pending` and employers only see `approved`. Add an admin screen or Cloudinary moderation.
-- Job postings UI and skill tests (`app_tested`). Workers can manage portfolio uploads on the web; profile and visibility changes remain available through WhatsApp.
+- Skill tests (`app_tested`). Workers can manage portfolio uploads and apply for jobs on the web; profile and visibility changes remain available through WhatsApp.
 - Run `npm run typecheck` after making changes to check the TypeScript code.
 
 ## Security notes

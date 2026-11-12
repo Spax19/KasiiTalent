@@ -37,6 +37,8 @@ export const COL = {
   endorsements: "endorsements",
   media: "portfolio_media",
   jobs: "job_postings",
+  jobApplications: "job_applications",
+  savedCandidates: "saved_candidates",
   contactRequests: "contact_requests",
   deletionRequests: "deletion_requests",
 } as const;

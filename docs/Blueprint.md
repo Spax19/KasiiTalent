@@ -116,6 +116,8 @@ Conventions: document IDs for users = Firebase Auth `uid`. Timestamps are Firest
 
 ### 2.8 Supporting collections
 
+- `job_applications/{jobId}_{workerUid}`: `jobId`, `employerUid`, `workerUid`, `jobTitle`, `township`, `workerName`, `workerTownship`, `message`, `status` (`pending | accepted | declined`), `createdAt`, `respondedAt?`. The worker UID/job ID pair prevents duplicate applications; private contact details are not copied into the application.
+- `saved_candidates/{employerUid}_{workerUid}`: `employerUid`, `workerUid`, `createdAt`. Saved profiles are loaded from the current worker profile only while it remains visible.
 - `contact_requests/{id}`: `employerUid`, `workerUid`, `jobId?`, `status` (`sent | accepted | declined | expired`), `createdAt`, `respondedAt`.
 - `wa_sessions/{phoneHash}`: conversation `step`, partial answers, TTL 7 days (enable Firestore TTL on `expiresAt`).
 - `deletion_requests/{id}`: `uid`, `requestedAt`, `completedAt`.

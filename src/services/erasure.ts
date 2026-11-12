@@ -50,6 +50,7 @@ export async function deleteWorkerAccount(uid: string): Promise<void> {
     deleteWhere(COL.skills, "uid", uid),
     deleteWhere(COL.consents, "uid", uid),
     deleteWhere(COL.contactRequests, "workerUid", uid),
+    deleteWhere(COL.savedCandidates, "workerUid", uid),
     // Endorsements about the worker contain third-party personal data (the voucher's name).
     deleteWhere(COL.endorsements, "workerUid", uid),
   ]);

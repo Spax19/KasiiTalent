@@ -16,6 +16,7 @@ import StarIcon from "@mui/icons-material/Star";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ColorModeToggle from "@/components/ColorModeToggle";
 import SignOutButton from "@/components/auth/SignOutButton";
+import WorkerSidebar from "@/components/worker/WorkerSidebar";
 import WorkerPortfolioManager from "@/components/worker/WorkerPortfolioManager";
 import { adminDb, COL } from "@/lib/firebase/admin";
 import { getSessionUser } from "@/lib/auth";
@@ -89,7 +90,9 @@ export default async function WorkerDashboardPage() {
   const rating = Number(profile.ratingAvg ?? 0);
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "background.default", color: "text.primary" }}>
+    <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, minHeight: "100vh", bgcolor: "background.default", color: "text.primary" }}>
+      <WorkerSidebar active="dashboard" />
+      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
       <Box component="header" sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "background.paper" }}>
         <Container maxWidth="xl" sx={{ py: 1.5, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
           <Box>
@@ -99,6 +102,7 @@ export default async function WorkerDashboardPage() {
             <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>WORKER DASHBOARD</Typography>
           </Box>
           <Stack direction="row" spacing={1} alignItems="center">
+            <Button component="a" href="/worker/jobs" size="small">Find jobs</Button>
             <ColorModeToggle />
             <SignOutButton redirectTo="/worker/login" />
           </Stack>
@@ -259,6 +263,7 @@ export default async function WorkerDashboardPage() {
           </Stack>
         </Box>
       </Container>
+      </Box>
     </Box>
   );
 }

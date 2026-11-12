@@ -25,6 +25,8 @@ export interface GeoPoint {
 export interface UserDoc {
   role: Role;
   displayName: string;
+  businessName?: string;
+  businessType?: string;
   township: string;
   townshipSlug: string;
   city: string;
@@ -93,6 +95,7 @@ export interface PortfolioMediaDoc {
 
 export interface JobPostingDoc {
   employerUid: string;
+  employerName?: string;
   title: string;
   description: string;
   skillSlugs: string[];
@@ -107,6 +110,43 @@ export interface JobPostingDoc {
   expiresAt: Timestamp;
   applicantCount: number;
   createdAt: Timestamp;
+}
+
+export interface JobPostingDTO {
+  id: string;
+  employerName: string;
+  title: string;
+  description: string;
+  skillSlugs: string[];
+  paymentType: JobPostingDoc["paymentType"];
+  payAmountZar: number;
+  township: string;
+  radiusKm: number;
+  status: JobPostingDoc["status"];
+  startDate: string | null;
+  expiresAt: string;
+  createdAt: string;
+  applicantCount: number;
+}
+
+export interface EmployerJobApplicationDTO {
+  id: string;
+  jobId: string;
+  jobTitle: string;
+  workerName: string;
+  workerTownship: string;
+  message: string;
+  status: "pending" | "accepted" | "declined";
+  createdAt: string;
+}
+
+export interface WorkerJobApplicationDTO {
+  id: string;
+  jobTitle: string;
+  township: string;
+  message: string;
+  status: "pending" | "accepted" | "declined";
+  createdAt: string;
 }
 
 /* ---------- Browser-safe DTOs (no phone numbers, no Timestamps) ---------- */
